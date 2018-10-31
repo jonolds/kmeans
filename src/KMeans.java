@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class Kmeans {
+public class KMeans {
 
 	private static int K = 10, DIM = 20;
 	private static double THR = 0.01;
@@ -26,6 +26,7 @@ public class Kmeans {
 
 	static void kmeans() throws Exception {
 		SparkSession ss = settings();
+
 	    JavaRDD<String> data1 = ss.read().textFile("data.txt").toJavaRDD();
 	    JavaRDD<List<Double>> points = data1.map(d -> getPoints(d));
 
