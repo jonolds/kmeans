@@ -15,41 +15,37 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 @SuppressWarnings("unused")
 public class KMeans {
 
-	private static int K = 10, DIM = 20;
-	private static double THR = 0.01;
-	private static ArrayList<List<Double>> centroid;
+	private static final int K = 10, DIM = 20;
+	private static final double THR = 0.01;
+	private static ArrayList<List<Double>> centroid = new ArrayList<>();
 
+	static void kmeans(SparkSession ss) throws Exception {
 
-	static void kmeans() throws Exception {
-		SparkSession ss = settings();
-
+	/* Read data to be processed */
 	    JavaRDD<String> data1 = ss.read().textFile("data.txt").toJavaRDD();
 	    JavaRDD<List<Double>> points = data1.map(d -> getPoints(d));
 
-	    // Read the centroids
+	/* Read initial centroids */
 	    List<String> data2 = ss.read().textFile("centroid.txt").collectAsList();
-	    for (int i=0; i<K; i++) {
+	    for(int i=0; i<K; i++)
 			centroid.add(getPoints(data2.get(i)));
-	    }
 
-	    ArrayList<List<Double>> updateCentroid = new ArrayList<List<Double>>(centroid);
+	    ArrayList<List<Double>> updateCent = new ArrayList<>(centroid);
 
 	    do {
-	    	centroid = new ArrayList<List<Double>>(updateCentroid);
+	    	centroid = new ArrayList<List<Double>>(updateCent);
 	    	// TODO Assign points
 	    	// TODO Update centroids
 
-	    } while (diff(centroid, updateCentroid)>THR);
+	    } while (diff(centroid, updateCent)>THR);
 
-
-	    for (int i=0; i<K; i++) {
+	    for (int i=0; i<K; i++)
 	    	System.out.println(centroid.get(i));
-	    }
-
 	}
 
 	private static double diff(ArrayList<List<Double>> c1, ArrayList<List<Double>> c2) {
@@ -59,7 +55,7 @@ public class KMeans {
 
 	private static Tuple2<Integer, List<Double>> update(Tuple2<Integer, Iterable<List<Double>>> c) {
 		// c.1 is the ID of the centroid. c.2 is the list of all the points assigned to the centroid.
-		// TODO Compute the average of all assigned points to update the centroid.
+		// TODO Computpe the average of all assigned points to update the centroid.
 		return null;
 	}
 
@@ -69,38 +65,30 @@ public class KMeans {
 		return null;
 	}
 
-	private static double dist(List<Double> p, List<Double> q) {
-		// Compute the Euclidean distance between two points p and q
+/*DISTANCE between two points*/
+	private static double distance(List<Double> p, List<Double> q) {
 		double distance = 0.0;
-
-		for (int i=0; i<DIM; i++) {
+		for (int i=0; i<DIM; i++)
 			distance += (p.get(i)-q.get(i))*(p.get(i)-q.get(i));
-		}
 		return Math.sqrt(distance);
 	}
 
+/* Convert String elments to Lists of Doubles*/
 	private static List<Double> getPoints(String d) {
 		String[] s_point = d.split("\t");
 		Double[] d_point = new Double[DIM];
-		for (int i=0; i<DIM; i++) {
+		for (int i=0; i<DIM; i++)
 			d_point[i] = Double.parseDouble(s_point[i]);
-		}
 		return Arrays.asList(d_point);
 	}
-
-
-	static SparkSession settings() throws IOException {
-		Logger.getLogger("org").setLevel(Level.WARN);
-		Logger.getLogger("akka").setLevel(Level.WARN);
-		SparkSession.clearActiveSession();
-		SparkSession spark = SparkSession.builder().appName("Kmeans").config("spark.master", "local").config("spark.eventlog.enabled","true").config("spark.executor.cores", "2").getOrCreate();
-		SparkContext sc = spark.sparkContext();
-		sc.setLogLevel("WARN");
-		FileUtils.deleteDirectory(new File("output"));
-		return spark;
-	}
-	public static void main(String[] args) throws Exception {
-		kmeans();
-		Thread.sleep(20000);
-	}
 }
+
+/* TEST ArrayList<List<Double>> Deep Copy !!!WRONG */
+//for(List l : centroid)
+//updateCent.add(new ArrayList<Double>(l));
+//printCentroids(centroid);
+//for(int i = 0; i < 3; i++)
+//for(int k = 0; k < 20; k++)
+//	updateCent.get(i).set(k, 9.9);
+//printCentroids(updateCent);
+//printCentroids(centroid);
